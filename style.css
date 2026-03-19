@@ -1,0 +1,204 @@
+/* ========== 全局基础 ========== */
+:root {
+    --we-red: #b33e3e;
+    --we-dark-red: #7a2a2a;
+    --we-black: #0c0c0c;
+    --we-gray: #2a2a2a;
+    --we-light-gray: #4a4a4a;
+    --we-gold: #a67c4c;
+    --we-text: #dcdcdc;
+    --we-border: #5a4a4a;
+    --we-glow: rgba(180, 60, 60, 0.3);
+}
+
+body {
+    background-color: var(--we-black) !important;
+    color: var(--we-text) !important;
+    font-family: 'Roboto Condensed', 'Impact', 'Arial Narrow', sans-serif !important;
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 2px rgba(0,0,0,0.5);
+}
+
+/* ========== 顶栏 ========== */
+.navbar {
+    background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%) !important;
+    border-bottom: 2px solid var(--we-red) !important;
+    box-shadow: 0 4px 10px rgba(180, 60, 60, 0.2);
+}
+
+.navbar .nav-link, .navbar .dropdown-toggle {
+    color: #bbb !important;
+    text-transform: uppercase;
+    font-weight: 500;
+    border-left: 1px solid #333;
+    margin: 0 2px;
+    padding: 10px 15px;
+    transition: 0.2s;
+}
+.navbar .nav-link:hover, .navbar .dropdown-toggle:hover {
+    color: var(--we-red) !important;
+    background: rgba(180, 60, 60, 0.1);
+    border-left-color: var(--we-red);
+}
+
+/* ========== 聊天界面 ========== */
+.messages {
+    background: transparent !important;
+}
+.message {
+    background: rgba(20, 20, 20, 0.85) !important;
+    border: 1px solid var(--we-border) !important;
+    border-left: 4px solid var(--we-red) !important;
+    border-radius: 4px 8px 8px 4px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.6), inset 0 0 10px rgba(180,60,60,0.2);
+    margin-bottom: 12px !important;
+    backdrop-filter: blur(2px);
+}
+.message.user {
+    border-left-color: var(--we-gold) !important;
+}
+.message .message-content {
+    color: #eee !important;
+    font-size: 14px;
+    line-height: 1.6;
+}
+.message .message-meta {
+    color: #aaa !important;
+    font-size: 11px;
+    text-transform: uppercase;
+    border-bottom: 1px dashed #3a3a3a;
+    padding-bottom: 4px;
+}
+
+/* ========== 输入区域 ========== */
+#send_form {
+    background: #1e1e1e !important;
+    border-top: 3px solid var(--we-red) !important;
+    padding: 10px !important;
+    box-shadow: 0 -4px 10px rgba(0,0,0,0.8);
+}
+#send_textarea {
+    background: #0a0a0a !important;
+    border: 1px solid #4a3a3a !important;
+    color: #ddd !important;
+    border-radius: 6px !important;
+    padding: 12px !important;
+    font-family: 'Courier New', monospace !important;
+    resize: vertical;
+    box-shadow: inset 0 0 8px rgba(180,60,60,0.3);
+}
+#send_textarea:focus {
+    border-color: var(--we-red) !important;
+    outline: none;
+    box-shadow: 0 0 12px var(--we-glow);
+}
+.send_button {
+    background: var(--we-red) !important;
+    border: none !important;
+    color: white !important;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-radius: 4px !important;
+    transition: 0.2s;
+    box-shadow: 0 2px 0 #4a1a1a;
+}
+.send_button:hover {
+    background: #c55 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 0 #4a1a1a;
+}
+
+/* ========== 侧边栏 (Character List) ========== */
+#rm_characters_block, #rm_info_block {
+    background: #1e1e1e !important;
+    border-right: 2px solid #3a2a2a !important;
+}
+.char_name, .character-name {
+    color: #ddd !important;
+    border-bottom: 1px solid #3a3a3a;
+    padding: 8px 12px;
+    transition: 0.2s;
+}
+.char_name:hover, .character-name:hover {
+    background: #2a2a2a !important;
+    border-left: 3px solid var(--we-red);
+}
+.active-character {
+    background: #2a1a1a !important;
+    border-left: 3px solid var(--we-red) !important;
+}
+
+/* ========== 按钮与控件 ========== */
+.btn, .menu_button, .list-group-item {
+    background: #2a2a2a !important;
+    border: 1px solid #4a3a3a !important;
+    color: #ddd !important;
+    border-radius: 4px !important;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 1px;
+    transition: 0.2s;
+}
+.btn:hover, .menu_button:hover {
+    background: #3a3a3a !important;
+    border-color: var(--we-red) !important;
+    color: white !important;
+}
+
+/* ========== 滚动条 ========== */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+::-webkit-scrollbar-thumb {
+    background: #4a3a3a;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--we-red);
+}
+
+/* ========== 装饰性元素 ========== */
+/* 添加铆钉效果到几个主要容器 */
+#rm_characters_block::after, .navbar::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 12px;
+    height: 12px;
+    background: radial-gradient(circle, #b33e3e 10%, #5a2a2a 70%);
+    border-radius: 50%;
+    box-shadow: 0 0 8px #b33e3e;
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* 输入框外发光模拟全息投影 */
+#send_form {
+    position: relative;
+}
+#send_form::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 10%;
+    width: 80%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--we-red), transparent);
+    animation: scan 4s infinite linear;
+}
+@keyframes scan {
+    0% { left: -20%; opacity: 0; }
+    50% { left: 50%; opacity: 1; }
+    100% { left: 120%; opacity: 0; }
+}
+
+/* ========== 硬科幻文字效果 ========== */
+.message-content {
+    text-shadow: 0 0 3px rgba(180,60,60,0.5);
+}
