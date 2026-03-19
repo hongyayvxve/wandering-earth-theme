@@ -1,37 +1,46 @@
-// 流浪地球主题扩展 - 背景动画模块（可选）
 (function() {
-    const canvasId = 'wandering-earth-canvas';
-    let canvas, ctx;
-    let width, height;
+    const canvasId = 'we-canvas';
+    let canvas, ctx, width, height;
     let stars = [];
-    let meteors = [];
+    let nebulas = [];  // 星云
+    let lightPillars = []; // 发动机光柱
 
-    // 初始化星空
-    function initStars(count = 200) {
+    function initStars(count = 300) {
         stars = [];
         for (let i = 0; i < count; i++) {
             stars.push({
                 x: Math.random() * width,
                 y: Math.random() * height,
-                radius: Math.random() * 2.5,
-                alpha: Math.random() * 0.7 + 0.3,
-                speed: Math.random() * 0.02 + 0.01,
-                flicker: Math.random() * 0.1 + 0.05
+                radius: Math.random() * 2 + 0.5,
+                alpha: Math.random() * 0.8 + 0.2,
+                speed: Math.random() * 0.02 + 0.005
             });
         }
     }
 
-    // 初始化流星
-    function initMeteors(count = 3) {
-        meteors = [];
+    function initNebulas(count = 3) {
+        nebulas = [];
         for (let i = 0; i < count; i++) {
-            meteors.push({
+            nebulas.push({
                 x: Math.random() * width,
-                y: Math.random() * height * 0.2,
-                length: Math.random() * 80 + 40,
-                speed: Math.random() * 6 + 4,
-                alpha: Math.random() * 0.5 + 0.3,
-                angle: Math.PI / 4 + (Math.random() * 0.3 - 0.15) // 约45度
+                y: Math.random() * height,
+                radius: Math.random() * 150 + 100,
+                color: `rgba(80, 20, 20, ${Math.random() * 0.15 + 0.05})`,
+                speedX: (Math.random() - 0.5) * 0.02,
+                speedY: (Math.random() - 0.5) * 0.02
+            });
+        }
+    }
+
+    function initLightPillars(count = 2) {
+        lightPillars = [];
+        for (let i = 0; i < count; i++) {
+            lightPillars.push({
+                x: Math.random() * width,
+                y: height,
+                width: Math.random() * 60 + 30,
+                alpha: Math.random() * 0.3 + 0.1,
+                speed: Math.random() * 0.5 + 0.2
             });
         }
     }
@@ -42,8 +51,9 @@
         if (canvas) {
             canvas.width = width;
             canvas.height = height;
-            initStars(250);
-            initMeteors(3);
+            initStars(350);
+            initNebulas(4);
+            initLightPillars(2);
         }
     }
 
@@ -51,52 +61,43 @@
         if (!ctx) return;
         ctx.clearRect(0, 0, width, height);
 
+        // 绘制星云（半透明，慢速移动）
+        nebulas.forEach(n => {
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, n.radius, 0, 2 * Math.PI);
+            ctx.fillStyle = n.color;
+            ctx.fill();
+            n.x += n.speedX;
+            n.y += n.speedY;
+            if (n.x < -n.radius) n.x = width + n.radius;
+            if (n.x > width + n.radius) n.x = -n.radius;
+            if (n.y < -n.radius) n.y = height + n.radius;
+            if (n.y > height + n.radius) n.y = -n.radius;
+        });
+
         // 绘制星星
         stars.forEach(s => {
             ctx.beginPath();
             ctx.arc(s.x, s.y, s.radius, 0, 2 * Math.PI);
             ctx.fillStyle = `rgba(255, 240, 200, ${s.alpha})`;
             ctx.fill();
-
-            // 微微闪烁
-            s.alpha += (Math.random() - 0.5) * s.flicker;
+            s.alpha += (Math.random() - 0.5) * 0.05;
             if (s.alpha > 0.9) s.alpha = 0.9;
-            if (s.alpha < 0.3) s.alpha = 0.3;
+            if (s.alpha < 0.2) s.alpha = 0.2;
         });
 
-        // 绘制流星（带尾迹）
-        meteors.forEach(m => {
-            const dx = Math.cos(m.angle) * m.length;
-            const dy = Math.sin(m.angle) * m.length;
-
-            // 主尾迹
-            ctx.beginPath();
-            ctx.moveTo(m.x, m.y);
-            ctx.lineTo(m.x - dx, m.y - dy);
-            ctx.strokeStyle = `rgba(200, 220, 255, ${m.alpha})`;
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            // 十字横线（增加工业感）
-            const perpAngle = m.angle + Math.PI / 2;
-            const perpDx = Math.cos(perpAngle) * 6;
-            const perpDy = Math.sin(perpAngle) * 6;
-            ctx.beginPath();
-            ctx.moveTo(m.x - perpDx, m.y - perpDy);
-            ctx.lineTo(m.x + perpDx, m.y + perpDy);
-            ctx.strokeStyle = `rgba(220, 240, 255, ${m.alpha * 0.7})`;
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
-
-            // 移动
-            m.x += Math.cos(m.angle) * m.speed;
-            m.y += Math.sin(m.angle) * m.speed;
-
-            // 重置
-            if (m.x > width + 100 || m.y > height + 100) {
-                m.x = Math.random() * width;
-                m.y = Math.random() * height * 0.2;
-                m.alpha = Math.random() * 0.6 + 0.2;
+        // 绘制发动机光柱（从下往上）
+        lightPillars.forEach(p => {
+            const gradient = ctx.createLinearGradient(p.x, p.y, p.x, p.y - 200);
+            gradient.addColorStop(0, `rgba(180, 60, 60, ${p.alpha})`);
+            gradient.addColorStop(0.5, `rgba(140, 40, 40, ${p.alpha * 0.5})`);
+            gradient.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(p.x - p.width/2, p.y - 200, p.width, 200);
+            p.y -= p.speed;
+            if (p.y < -100) {
+                p.y = height;
+                p.x = Math.random() * width;
             }
         });
 
@@ -114,7 +115,7 @@
         canvas.style.height = '100%';
         canvas.style.zIndex = '-1';
         canvas.style.pointerEvents = 'none';
-        canvas.style.opacity = '0.3'; // 降低亮度，不干扰阅读
+        canvas.style.opacity = '0.35'; // 低亮度，不抢眼
         document.body.appendChild(canvas);
         ctx = canvas.getContext('2d');
         resizeCanvas();
@@ -122,7 +123,6 @@
         draw();
     }
 
-    // 酒馆加载完成后启动（可选，如果不想用动画可注释掉）
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', startAnimation);
     } else {
