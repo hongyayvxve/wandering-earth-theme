@@ -1,131 +1,235 @@
+// 流浪地球主题扩展 - 可配置粒子特效
 (function() {
     const canvasId = 'we-canvas';
     let canvas, ctx, width, height;
-    let stars = [];
-    let nebulas = [];  // 星云
-    let lightPillars = []; // 发动机光柱
+    let particles = [];
+    let animationFrame;
+    let currentSettings = {
+        style: 'star',
+        count: 15,
+        speed: 3,
+        size: 30,
+        opacity: 0.4
+    };
 
-    function initStars(count = 300) {
-        stars = [];
-        for (let i = 0; i < count; i++) {
-            stars.push({
-                x: Math.random() * width,
-                y: Math.random() * height,
-                radius: Math.random() * 2 + 0.5,
-                alpha: Math.random() * 0.8 + 0.2,
-                speed: Math.random() * 0.02 + 0.005
-            });
+    // ========== 从酒馆加载设置 ==========
+    function loadSettings() {
+        try {
+            const context = window.SillyTavern?.getContext?.();
+            if (context && context.extensionSettings && context.extensionSettings['wandering-earth-theme']) {
+                currentSettings = { ...currentSettings, ...context.extensionSettings['wandering-earth-theme'] };
+            }
+        } catch (e) {
+            console.warn('加载设置失败', e);
         }
     }
 
-    function initNebulas(count = 3) {
-        nebulas = [];
-        for (let i = 0; i < count; i++) {
-            nebulas.push({
-                x: Math.random() * width,
-                y: Math.random() * height,
-                radius: Math.random() * 150 + 100,
-                color: `rgba(80, 20, 20, ${Math.random() * 0.15 + 0.05})`,
-                speedX: (Math.random() - 0.5) * 0.02,
-                speedY: (Math.random() - 0.5) * 0.02
-            });
+    // ========== 保存设置 ==========
+    function saveSettings() {
+        const context = window.SillyTavern?.getContext?.();
+        if (context) {
+            context.extensionSettings['wandering-earth-theme'] = currentSettings;
+            context.saveSettings();
         }
     }
 
-    function initLightPillars(count = 2) {
-        lightPillars = [];
-        for (let i = 0; i < count; i++) {
-            lightPillars.push({
-                x: Math.random() * width,
-                y: height,
-                width: Math.random() * 60 + 30,
-                alpha: Math.random() * 0.3 + 0.1,
-                speed: Math.random() * 0.5 + 0.2
-            });
+    // ========== 粒子类 ==========
+    class Particle {
+        constructor(style) {
+            this.style = style;
+            this.reset();
+        }
+        reset() {
+            this.x = Math.random() * width;
+            this.y = Math.random() * height;
+            this.vx = (Math.random() - 0.5) * currentSettings.speed * 1.5;
+            this.vy = (Math.random() - 0.5) * currentSettings.speed * 1.5;
+            this.size = currentSettings.size * (0.7 + Math.random() * 0.6);
+            this.angle = Math.random() * Math.PI * 2;
+            this.rotationSpeed = (Math.random() - 0.5) * 0.02;
+            this.brightness = 0.5 + Math.random() * 0.5;
+            this.flickerSpeed = 0.01 + Math.random() * 0.03;
+            // 水滴特定属性
+            this.reflectPos = Math.random();
+        }
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            this.angle += this.rotationSpeed;
+
+            // 闪烁
+            this.brightness += (Math.random() - 0.5) * this.flickerSpeed;
+            if (this.brightness > 1) this.brightness = 1;
+            if (this.brightness < 0.3) this.brightness = 0.3;
+
+            // 边界循环
+            const margin = this.size;
+            if (this.x < -margin) this.x = width + margin;
+            if (this.x > width + margin) this.x = -margin;
+            if (this.y < -margin) this.y = height + margin;
+            if (this.y > height + margin) this.y = -margin;
+        }
+        draw(ctx) {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.angle);
+            ctx.globalAlpha = this.brightness * currentSettings.opacity;
+            ctx.shadowColor = 'rgba(200, 100, 100, 0.8)';
+            ctx.shadowBlur = 10;
+
+            switch (this.style) {
+                case 'star':
+                    this.drawStar(ctx);
+                    break;
+                case 'waterdrop':
+                    this.drawWaterdrop(ctx);
+                    break;
+                case 'gear':
+                    this.drawGear(ctx);
+                    break;
+                case 'spark':
+                    this.drawSpark(ctx);
+                    break;
+                case 'triangle':
+                    this.drawTriangle(ctx);
+                    break;
+                default:
+                    this.drawStar(ctx);
+            }
+            ctx.restore();
+        }
+        drawStar(ctx) {
+            // 闪烁的十字星（两个细长椭圆交叉）
+            const w = this.size;
+            const h = this.size * 0.15;
+            ctx.fillStyle = '#ffdd99';
+            // 水平条
+            ctx.fillRect(-w/2, -h/2, w, h);
+            // 垂直条
+            ctx.fillRect(-h/2, -w/2, h, w);
+        }
+        drawWaterdrop(ctx) {
+            // 模仿三体水滴：椭圆 + 高光
+            const w = this.size * 0.8;
+            const h = this.size * 1.2;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, w/2, h/2, 0, 0, Math.PI * 2);
+            ctx.fillStyle = '#aaccff';
+            ctx.fill();
+            // 高光
+            ctx.beginPath();
+            ctx.ellipse(-w*0.1, -h*0.1, w*0.2, h*0.2, 0, 0, Math.PI*2);
+            ctx.fillStyle = '#ffffff';
+            ctx.globalAlpha *= 0.7;
+            ctx.fill();
+        }
+        drawGear(ctx) {
+            // 简单齿轮：圆形 + 几个齿
+            const r = this.size / 2;
+            ctx.beginPath();
+            ctx.arc(0, 0, r, 0, Math.PI * 2);
+            ctx.fillStyle = '#cc9966';
+            ctx.fill();
+            // 齿
+            ctx.fillStyle = '#aa7755';
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2;
+                const dx = Math.cos(angle) * r * 1.2;
+                const dy = Math.sin(angle) * r * 1.2;
+                ctx.beginPath();
+                ctx.ellipse(dx, dy, r*0.2, r*0.2, 0, 0, Math.PI*2);
+                ctx.fill();
+            }
+        }
+        drawSpark(ctx) {
+            // 光点：圆形 + 光晕
+            ctx.beginPath();
+            ctx.arc(0, 0, this.size/2, 0, Math.PI*2);
+            ctx.fillStyle = '#ffeeaa';
+            ctx.shadowBlur = 20;
+            ctx.fill();
+        }
+        drawTriangle(ctx) {
+            // 旧版流星三角形
+            ctx.beginPath();
+            ctx.moveTo(this.size, 0);
+            ctx.lineTo(-this.size/2, -this.size/3);
+            ctx.lineTo(-this.size/2, this.size/3);
+            ctx.closePath();
+            ctx.fillStyle = '#ddaa88';
+            ctx.fill();
         }
     }
 
+    // ========== 初始化粒子 ==========
+    function initParticles() {
+        particles = [];
+        for (let i = 0; i < currentSettings.count; i++) {
+            particles.push(new Particle(currentSettings.style));
+        }
+    }
+
+    // ========== 动画循环 ==========
+    function animate() {
+        ctx.clearRect(0, 0, width, height);
+        particles.forEach(p => {
+            p.update();
+            p.draw(ctx);
+        });
+        animationFrame = requestAnimationFrame(animate);
+    }
+
+    // ========== 重置画布 ==========
     function resizeCanvas() {
         width = window.innerWidth;
         height = window.innerHeight;
         if (canvas) {
             canvas.width = width;
             canvas.height = height;
-            initStars(350);
-            initNebulas(4);
-            initLightPillars(2);
+            initParticles();
         }
     }
 
-    function draw() {
-        if (!ctx) return;
-        ctx.clearRect(0, 0, width, height);
-
-        // 绘制星云（半透明，慢速移动）
-        nebulas.forEach(n => {
-            ctx.beginPath();
-            ctx.arc(n.x, n.y, n.radius, 0, 2 * Math.PI);
-            ctx.fillStyle = n.color;
-            ctx.fill();
-            n.x += n.speedX;
-            n.y += n.speedY;
-            if (n.x < -n.radius) n.x = width + n.radius;
-            if (n.x > width + n.radius) n.x = -n.radius;
-            if (n.y < -n.radius) n.y = height + n.radius;
-            if (n.y > height + n.radius) n.y = -n.radius;
-        });
-
-        // 绘制星星
-        stars.forEach(s => {
-            ctx.beginPath();
-            ctx.arc(s.x, s.y, s.radius, 0, 2 * Math.PI);
-            ctx.fillStyle = `rgba(255, 240, 200, ${s.alpha})`;
-            ctx.fill();
-            s.alpha += (Math.random() - 0.5) * 0.05;
-            if (s.alpha > 0.9) s.alpha = 0.9;
-            if (s.alpha < 0.2) s.alpha = 0.2;
-        });
-
-        // 绘制发动机光柱（从下往上）
-        lightPillars.forEach(p => {
-            const gradient = ctx.createLinearGradient(p.x, p.y, p.x, p.y - 200);
-            gradient.addColorStop(0, `rgba(180, 60, 60, ${p.alpha})`);
-            gradient.addColorStop(0.5, `rgba(140, 40, 40, ${p.alpha * 0.5})`);
-            gradient.addColorStop(1, 'rgba(0,0,0,0)');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(p.x - p.width/2, p.y - 200, p.width, 200);
-            p.y -= p.speed;
-            if (p.y < -100) {
-                p.y = height;
-                p.x = Math.random() * width;
-            }
-        });
-
-        requestAnimationFrame(draw);
-    }
-
+    // ========== 启动/更新特效 ==========
     function startAnimation() {
-        if (document.getElementById(canvasId)) return;
-        canvas = document.createElement('canvas');
-        canvas.id = canvasId;
-        canvas.style.position = 'fixed';
-        canvas.style.top = '0';
-        canvas.style.left = '0';
-        canvas.style.width = '100%';
-        canvas.style.height = '100%';
-        canvas.style.zIndex = '-1';
-        canvas.style.pointerEvents = 'none';
-        canvas.style.opacity = '0.35'; // 低亮度，不抢眼
-        document.body.appendChild(canvas);
-        ctx = canvas.getContext('2d');
+        if (!canvas) {
+            canvas = document.createElement('canvas');
+            canvas.id = canvasId;
+            canvas.style.position = 'fixed';
+            canvas.style.top = '0';
+            canvas.style.left = '0';
+            canvas.style.width = '100%';
+            canvas.style.height = '100%';
+            canvas.style.zIndex = '-1';
+            canvas.style.pointerEvents = 'none';
+            document.body.appendChild(canvas);
+            ctx = canvas.getContext('2d');
+            window.addEventListener('resize', resizeCanvas);
+        }
         resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
-        draw();
+        if (animationFrame) cancelAnimationFrame(animationFrame);
+        animate();
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', startAnimation);
-    } else {
-        startAnimation();
-    }
+    // ========== 监听设置变化 ==========
+    window.addEventListener('we-settings-changed', (e) => {
+        currentSettings = e.detail;
+        // 重新生成粒子（样式/数量改变时）
+        if (particles.length !== currentSettings.count || particles[0]?.style !== currentSettings.style) {
+            initParticles();
+        } else {
+            // 只更新速度/大小等属性
+            particles.forEach(p => {
+                p.vx = (Math.random() - 0.5) * currentSettings.speed * 1.5;
+                p.vy = (Math.random() - 0.5) * currentSettings.speed * 1.5;
+                p.size = currentSettings.size * (0.7 + Math.random() * 0.6);
+            });
+        }
+        // 更新透明度
+        canvas.style.opacity = currentSettings.opacity;
+    });
+
+    // ========== 初始化 ==========
+    loadSettings();
+    startAnimation();
 })();
