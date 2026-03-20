@@ -1,66 +1,54 @@
-<div id="we-settings" style="padding: 10px;">
-    <h3 style="color: #b84a4a; border-bottom: 1px solid #4a3a3a; padding-bottom: 5px;">粒子特效配置</h3>
+<div ID=“we-settings” style="内边距: 15像素; color: #e0d0d0;”>
+    <h3 style="color: #b84a4a; border-bottom: 1像素 实心 #4a3a3a; 下内边距: 8像素; 上外边距: 0;">⚙️ 粒子特效配置</h3>
     
-    <div class="setting-item">
-        <div class="setting-label">粒子样式</div>
-        <div class="setting-control">
-            <select id="we-particle-style" style="width: 100%;">
-                <option value="star">✨ 闪烁十字星</option>
-                <option value="waterdrop">💧 三体水滴</option>
-                <option value="gear">⚙️ 机械齿轮</option>
-                <option value="spark">🌟 光点</option>
-                <option value="triangle">▲ 流星(旧版)</option>
-            </select>
-        </div>
+    <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 5px; color: #b09090;">粒子样式</label>
+        <select id="we-particle-style" style="width: 100%; padding: 6px; background: #1f1212; border: 1px solid #4a3a3a; color: #e0d0d0; border-radius: 4px;">
+            <option value="star">✨ 闪烁十字星（精致版）</option>
+            <option value="waterdrop">💧 三体水滴（镜面效果）</option>
+            <option value="gear">⚙️ 机械齿轮（工业风）</option>
+            <option value="spark">🌟 光点（柔和辉光）</option>
+            <option value="triangle">▲ 流星（经典版）</option>
+        </select>
     </div>
 
-    <div class="setting-item">
-        <div class="setting-label">粒子数量</div>
-        <div class="setting-control">
-            <input type="range" id="we-particle-count" min="5" max="50" value="15" step="1">
-            <span id="we-count-value">15</span>
-        </div>
+    <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 5px; color: #b09090;">粒子数量 <span id="we-count-value" style="float: right;">15</span></label>
+        <input type="range" id="we-particle-count" min="5" max="40" value="15" step="1" style="width: 100%;">
     </div>
 
-    <div class="setting-item">
-        <div class="setting-label">移动速度</div>
-        <div class="setting-control">
-            <input type="range" id="we-particle-speed" min="0.5" max="8" value="3" step="0.5">
-            <span id="we-speed-value">3.0</span>
-        </div>
+    <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 5px; color: #b09090;">移动速度 <span id="we-speed-value" style="float: right;">3.0</span></label>
+        <input type="range" id="we-particle-speed" min="0.5" max="6" value="3" step="0.5" style="width: 100%;">
     </div>
 
-    <div class="setting-item">
-        <div class="setting-label">粒子大小</div>
-        <div class="setting-control">
-            <input type="range" id="we-particle-size" min="10" max="100" value="30" step="5">
-            <span id="we-size-value">30</span>
-        </div>
+    <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 5px; color: #b09090;">粒子大小 <span id="we-size-value" style="float: right;">30</span></label>
+        <input type="range" id="we-particle-size" min="15" max="80" value="30" step="5" style="width: 100%;">
     </div>
 
-    <div class="setting-item">
-        <div class="setting-label">背景透明度</div>
-        <div class="setting-control">
-            <input type="range" id="we-opacity" min="0.1" max="0.8" value="0.4" step="0.05">
-            <span id="we-opacity-value">0.4</span>
-        </div>
+    <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 5px; color: #b09090;">背景透明度 <span id="we-opacity-value" style="float: right;">0.35</span></label>
+        <input type="range" id="we-opacity" min="0.15" max="0.6" value="0.35" step="0.05" style="width: 100%;">
     </div>
 
-    <button id="we-reset-defaults" class="menu_button">恢复默认</button>
-    <div id="we-status" style="margin-top: 10px; color: #b84a4a;"></div>
+    <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <button id="we-reset-defaults" class="menu_button" style="flex: 1;">恢复默认</button>
+        <button id="we-close-settings" class="menu_button" style="flex: 1;">关闭</button>
+    </div>
+    <div id="we-status" style="margin-top: 10px; color: #b84a4a; text-align: center;"></div>
 
     <script>
-        (function() {
-            // 加载当前设置并初始化UI
+        (函数() {
+            // 这个脚本会在settings.html加载时执行
             const settings = window.SillyTavern?.getContext?.()?.extensionSettings?.['wandering-earth-theme'] || {};
-            const form = document.getElementById('we-settings');
             
             function updateDisplay(id, value) {
                 const span = document.getElementById(id + '-value');
-                if (span) span.innerText = value;
+                如果 (span) 跨度.innerText = 值;
             }
 
-            // 初始化各控件
+            // 初始化控件
             const styleSelect = document.getElementById('we-particle-style');
             const countInput = document.getElementById('we-particle-count');
             const speedInput = document.getElementById('we-particle-speed');
@@ -71,38 +59,39 @@
             countInput.value = settings.count || 15;
             speedInput.value = settings.speed || 3;
             sizeInput.value = settings.size || 30;
-            opacityInput.value = settings.opacity || 0.4;
+            opacityInput.value = settings.opacity || 0.35;
 
             updateDisplay('we-count', countInput.value);
             updateDisplay('we-speed', speedInput.value);
             updateDisplay('we-size', sizeInput.value);
             updateDisplay('we-opacity', opacityInput.value);
 
-            // 监听变化
+            // 实时显示数值
             countInput.addEventListener('input', (e) => updateDisplay('we-count', e.target.value));
             speedInput.addEventListener('input', (e) => updateDisplay('we-speed', e.target.value));
             sizeInput.addEventListener('input', (e) => updateDisplay('we-size', e.target.value));
             opacityInput.addEventListener('input', (e) => updateDisplay('we-opacity', e.target.value));
 
-            // 保存设置
             function saveSettings() {
                 const newSettings = {
                     style: styleSelect.value,
                     count: parseInt(countInput.value, 10),
                     speed: parseFloat(speedInput.value),
-                    size: parseInt(sizeInput.value, 10),
-                    opacity: parseFloat(opacityInput.value),
+                    尺寸: parseInt(sizeInput.value, 10),
+                    透明度: parseFloat(opacityInput.value),
                 };
-                // 通过酒馆API保存
-                if (window.SillyTavern?.getContext?.()?.saveSettings) {
-                    const context = window.SillyTavern.getContext();
-                    context.extensionSettings['wandering-earth-theme'] = newSettings;
-                    context.saveSettings();
+                
+                const context = window.SillyTavern?.getContext?.();
+                如果 (上下文) {
+                    上下文.扩展设置['流浪地球主题'] = 新设置;
+                    上下文.保存设置防抖(); // 官方推荐的方法[引用:4]
+                    
+                    // 触发自定义事件通知index.js
+                    window.dispatchEvent(new CustomEvent('we-settings-changed', { detail: newSettings }));
+                    
+                    document.getElementById('we-status').innerText = '✓ 已保存';
+                    setTimeout(() => document.getElementById('we-status').innerText = '', 1500);
                 }
-                // 触发自定义事件，通知index.js更新
-                window.dispatchEvent(new CustomEvent('we-settings-changed', { detail: newSettings }));
-                document.getElementById('we-status').innerText = '已保存';
-                setTimeout(() => document.getElementById('we-status').innerText = '', 1500);
             }
 
             // 绑定保存事件
@@ -116,16 +105,22 @@
                 countInput.value = 15;
                 speedInput.value = 3;
                 sizeInput.value = 30;
-                opacityInput.value = 0.4;
+                opacityInput.value = 0.35;
                 updateDisplay('we-count', 15);
                 updateDisplay('we-speed', 3);
                 updateDisplay('we-size', 30);
-                updateDisplay('we-opacity', 0.4);
-                saveSettings();
+                updateDisplay('we-opacity', 0.35);
+                保存设置();
             });
 
-            // 初始保存一次（如果还没有设置）
-            if (!settings.style) saveSettings();
+            // 关闭面板
+            document.getElementById('we-close-settings').addEventListener('click', () => {
+                const panel = document.getElementById('we-settings')?.closest('.drawer-content');
+                如果 (面板) 面板.样式.显示 = '无';
+            });
+
+            // 初始保存
+            如果 (!设置.样式) 保存设置();
         })();
-    </script>
-</div>
+    </脚本>
+        </div>
