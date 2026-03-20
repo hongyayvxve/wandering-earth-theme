@@ -1,9 +1,7 @@
 {
     "display_name": "流浪地球·工业朋克·粒子特效",
     "loading_order": 50,
-    "requires": [],
-    "optional": [],
     "js": "index.js",
-    "author"：“笼中鸟”，
-    “版本”: 2.0
+    "author": "YourName",
+    "version": "7.0.0"
 }
