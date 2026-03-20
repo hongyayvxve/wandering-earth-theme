@@ -3,7 +3,7 @@ import { getContext, registerExtension, saveSettingsDebounced } from '../../../e
 const extName = 'wandering-earth-theme';
 
 let settings = {
-    style: 'star',   // star, meteor, waterdrop, gear, spark
+    style: 'star',
     count: 12,
     speed: 2,
     size: 35,
@@ -286,102 +286,110 @@ function stopAnimation() {
     ctx = null;
 }
 
-// ---------- 扩展注册 ----------
+// 渲染配置面板（由扩展系统调用）
+function renderSettings() {
+    return `
+        <div id="we-settings" style="margin:15px 0; padding:10px; background:#1a0f0f; border:1px solid #4a3a3a; border-radius:8px;">
+            <h3 style="margin:0 0 12px 0; color:#b84a4a;">⚙️ 流浪地球·粒子特效</h3>
+            <div style="margin-bottom:12px;">
+                <label style="color:#b09090;">样式</label>
+                <select id="we-style" style="width:100%; background:#0f0707; color:#e0d0d0; border:1px solid #4a3a3a; padding:6px;">
+                    <option value="star" ${settings.style==='star'?'selected':''}>✨ 十字星</option>
+                    <option value="meteor" ${settings.style==='meteor'?'selected':''}>☄️ 流星</option>
+                    <option value="waterdrop" ${settings.style==='waterdrop'?'selected':''}>💧 水滴</option>
+                    <option value="gear" ${settings.style==='gear'?'selected':''}>⚙️ 齿轮</option>
+                    <option value="spark" ${settings.style==='spark'?'selected':''}>🌟 光点</option>
+                </select>
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="color:#b09090;">数量 <span id="we-count-val">${settings.count}</span></label>
+                <input type="range" id="we-count" min="5" max="35" step="1" value="${settings.count}" style="width:100%;">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="color:#b09090;">速度 <span id="we-speed-val">${settings.speed}</span></label>
+                <input type="range" id="we-speed" min="0.5" max="4" step="0.5" value="${settings.speed}" style="width:100%;">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="color:#b09090;">大小 <span id="we-size-val">${settings.size}</span></label>
+                <input type="range" id="we-size" min="20" max="60" step="5" value="${settings.size}" style="width:100%;">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="color:#b09090;">透明度 <span id="we-opacity-val">${settings.opacity}</span></label>
+                <input type="range" id="we-opacity" min="0.2" max="0.6" step="0.05" value="${settings.opacity}" style="width:100%;">
+            </div>
+            <button id="we-reset" class="menu_button">恢复默认</button>
+            <div id="we-status" style="margin-top:10px; color:#b84a4a;"></div>
+        </div>
+    `;
+}
+
+function bindEvents() {
+    const style = document.getElementById('we-style');
+    const count = document.getElementById('we-count');
+    const speed = document.getElementById('we-speed');
+    const size = document.getElementById('we-size');
+    const opacity = document.getElementById('we-opacity');
+    const reset = document.getElementById('we-reset');
+    const status = document.getElementById('we-status');
+
+    const updateDisplay = () => {
+        document.getElementById('we-count-val').innerText = count.value;
+        document.getElementById('we-speed-val').innerText = speed.value;
+        document.getElementById('we-size-val').innerText = size.value;
+        document.getElementById('we-opacity-val').innerText = opacity.value;
+    };
+    const apply = () => {
+        const newSet = {
+            style: style.value,
+            count: parseInt(count.value,10),
+            speed: parseFloat(speed.value),
+            size: parseInt(size.value,10),
+            opacity: parseFloat(opacity.value)
+        };
+        Object.assign(settings, newSet);
+        const ctx = getContext();
+        ctx.extensionSettings[extName] = settings;
+        saveSettingsDebounced();
+        if(canvas) canvas.style.opacity = settings.opacity;
+        if(particles.length !== settings.count || particles[0]?.style !== settings.style) initParticles();
+        else particles.forEach(p => p.size = settings.size * (0.7 + Math.random() * 0.6));
+        status.innerText = '✓ 已应用';
+        setTimeout(()=>status.innerText='',1500);
+    };
+    style.addEventListener('change', apply);
+    count.addEventListener('input', updateDisplay);
+    speed.addEventListener('input', updateDisplay);
+    size.addEventListener('input', updateDisplay);
+    opacity.addEventListener('input', updateDisplay);
+    count.addEventListener('change', apply);
+    speed.addEventListener('change', apply);
+    size.addEventListener('change', apply);
+    opacity.addEventListener('change', apply);
+    reset.addEventListener('click', () => {
+        style.value = 'star';
+        count.value = 12;
+        speed.value = 2;
+        size.value = 35;
+        opacity.value = 0.4;
+        updateDisplay();
+        apply();
+    });
+    updateDisplay();
+}
+
+// 注册扩展
 registerExtension(extName, {
-    onLoad: async () => {
+    onLoad: () => {
         const context = getContext();
         const saved = context.extensionSettings[extName];
         if(saved) settings = {...settings, ...saved};
         startAnimation();
     },
-    onUnload: () => stopAnimation(),
+    onUnload: () => {
+        stopAnimation();
+    },
     render: () => {
-        const html = `
-            <div id="we-settings" style="margin:15px 0; padding:10px; background:#1a0f0f; border:1px solid #4a3a3a; border-radius:8px;">
-                <h3 style="margin:0 0 12px 0; color:#b84a4a;">⚙️ 流浪地球·粒子特效</h3>
-                <div style="margin-bottom:12px;">
-                    <label style="color:#b09090;">样式</label>
-                    <select id="we-style" style="width:100%; background:#0f0707; color:#e0d0d0; border:1px solid #4a3a3a; padding:6px;">
-                        <option value="star" ${settings.style==='star'?'selected':''}>✨ 十字星</option>
-                        <option value="meteor" ${settings.style==='meteor'?'selected':''}>☄️ 流星</option>
-                        <option value="waterdrop" ${settings.style==='waterdrop'?'selected':''}>💧 水滴</option>
-                        <option value="gear" ${settings.style==='gear'?'selected':''}>⚙️ 齿轮</option>
-                        <option value="spark" ${settings.style==='spark'?'selected':''}>🌟 光点</option>
-                    </select>
-                </div>
-                <div style="margin-bottom:12px;">
-                    <label style="color:#b09090;">数量 <span id="we-count-val">${settings.count}</span></label>
-                    <input type="range" id="we-count" min="5" max="35" step="1" value="${settings.count}" style="width:100%;">
-                </div>
-                <div style="margin-bottom:12px;">
-                    <label style="color:#b09090;">速度 <span id="we-speed-val">${settings.speed}</span></label>
-                    <input type="range" id="we-speed" min="0.5" max="4" step="0.5" value="${settings.speed}" style="width:100%;">
-                </div>
-                <div style="margin-bottom:12px;">
-                    <label style="color:#b09090;">大小 <span id="we-size-val">${settings.size}</span></label>
-                    <input type="range" id="we-size" min="20" max="60" step="5" value="${settings.size}" style="width:100%;">
-                </div>
-                <div style="margin-bottom:12px;">
-                    <label style="color:#b09090;">透明度 <span id="we-opacity-val">${settings.opacity}</span></label>
-                    <input type="range" id="we-opacity" min="0.2" max="0.6" step="0.05" value="${settings.opacity}" style="width:100%;">
-                </div>
-                <button id="we-reset" class="menu_button">恢复默认</button>
-                <div id="we-status" style="margin-top:10px; color:#b84a4a;"></div>
-            </div>
-        `;
-        setTimeout(() => {
-            const style = document.getElementById('we-style');
-            const count = document.getElementById('we-count');
-            const speed = document.getElementById('we-speed');
-            const size = document.getElementById('we-size');
-            const opacity = document.getElementById('we-opacity');
-            const reset = document.getElementById('we-reset');
-            const status = document.getElementById('we-status');
-
-            const updateDisplay = () => {
-                document.getElementById('we-count-val').innerText = count.value;
-                document.getElementById('we-speed-val').innerText = speed.value;
-                document.getElementById('we-size-val').innerText = size.value;
-                document.getElementById('we-opacity-val').innerText = opacity.value;
-            };
-            const apply = () => {
-                const newSet = {
-                    style: style.value,
-                    count: parseInt(count.value,10),
-                    speed: parseFloat(speed.value),
-                    size: parseInt(size.value,10),
-                    opacity: parseFloat(opacity.value)
-                };
-                Object.assign(settings, newSet);
-                const ctx = getContext();
-                ctx.extensionSettings[extName] = settings;
-                saveSettingsDebounced();
-                if(canvas) canvas.style.opacity = settings.opacity;
-                if(particles.length !== settings.count || particles[0]?.style !== settings.style) initParticles();
-                else particles.forEach(p => p.size = settings.size * (0.7 + Math.random() * 0.6));
-                status.innerText = '✓ 已应用';
-                setTimeout(()=>status.innerText='',1500);
-            };
-            style.addEventListener('change', apply);
-            count.addEventListener('input', updateDisplay);
-            speed.addEventListener('input', updateDisplay);
-            size.addEventListener('input', updateDisplay);
-            opacity.addEventListener('input', updateDisplay);
-            count.addEventListener('change', apply);
-            speed.addEventListener('change', apply);
-            size.addEventListener('change', apply);
-            opacity.addEventListener('change', apply);
-            reset.addEventListener('click', () => {
-                style.value = 'star';
-                count.value = 12;
-                speed.value = 2;
-                size.value = 35;
-                opacity.value = 0.4;
-                updateDisplay();
-                apply();
-            });
-            updateDisplay();
-        }, 0);
-        return html;
+        setTimeout(() => bindEvents(), 0);
+        return renderSettings();
     }
 });
