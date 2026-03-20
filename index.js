@@ -1,4 +1,4 @@
-// 流浪地球·粒子特效 - 自包含版（无import）
+// 流浪地球·粒子特效 - 纯浏览器版本（无 import）
 (function() {
     if (window.__WE_RUN) return;
     window.__WE_RUN = true;
@@ -16,24 +16,7 @@
     let stars = [], particles = [];
     let animId = null;
 
-    // 从酒馆设置中加载
-    function loadSettings() {
-        const context = window.SillyTavern?.getContext?.();
-        if (context?.extensionSettings?.[extName]) {
-            settings = { ...settings, ...context.extensionSettings[extName] };
-        }
-    }
-
-    function saveSettings() {
-        const context = window.SillyTavern?.getContext?.();
-        if (context) {
-            context.extensionSettings[extName] = settings;
-            if (context.saveSettingsDebounced) context.saveSettingsDebounced();
-            else if (context.saveSettings) context.saveSettings();
-        }
-    }
-
-    // 星星背景
+    // ---------- 星星背景 ----------
     function initStars(n = 180) {
         stars = [];
         for (let i = 0; i < n; i++) {
@@ -46,7 +29,7 @@
         }
     }
 
-    // 粒子类
+    // ---------- 粒子类 ----------
     class Particle {
         constructor(style) {
             this.style = style;
@@ -305,7 +288,7 @@
         ctx = null;
     }
 
-    // 配置面板渲染（由酒馆自动调用）
+    // 配置面板渲染
     function renderSettings() {
         return `
             <div id="we-settings" style="margin:15px 0; padding:10px; background:#1a0f0f; border:1px solid #4a3a3a; border-radius:8px;">
@@ -366,7 +349,18 @@
                 opacity: parseFloat(opacity.value)
             };
             Object.assign(settings, newSet);
-            saveSettings();
+            // 保存到酒馆设置
+            if (window.SillyTavern && window.SillyTavern.getContext) {
+                const ctx = window.SillyTavern.getContext();
+                if (ctx) {
+                    ctx.extensionSettings[extName] = settings;
+                    if (ctx.saveSettingsDebounced) ctx.saveSettingsDebounced();
+                    else if (ctx.saveSettings) ctx.saveSettings();
+                }
+            } else {
+                // 降级到 localStorage
+                localStorage.setItem(extName, JSON.stringify(settings));
+            }
             if(canvas) canvas.style.opacity = settings.opacity;
             if(particles.length !== settings.count || particles[0]?.style !== settings.style) initParticles();
             else particles.forEach(p => p.size = settings.size * (0.7 + Math.random() * 0.6));
@@ -394,7 +388,7 @@
         updateDisplay();
     }
 
-    // 注册扩展（等待SillyTavern全局对象就绪）
+    // 注册扩展（等待全局对象就绪）
     function register() {
         if (!window.SillyTavern || !window.SillyTavern.registerExtension) {
             setTimeout(register, 500);
@@ -402,14 +396,26 @@
         }
         window.SillyTavern.registerExtension(extName, {
             onLoad: () => {
-                loadSettings();
+                // 加载设置
+                const ctx = window.SillyTavern.getContext();
+                if (ctx && ctx.extensionSettings && ctx.extensionSettings[extName]) {
+                    settings = { ...settings, ...ctx.extensionSettings[extName] };
+                } else {
+                    const stored = localStorage.getItem(extName);
+                    if (stored) {
+                        try {
+                            settings = { ...settings, ...JSON.parse(stored) };
+                        } catch(e) {}
+                    }
+                }
                 startAnimation();
+                console.log('流浪地球·粒子特效已启动');
             },
-            onUnload: () => stopAnimation(),
-            render: () => {
-                setTimeout(() => {
-                    bindEvents();
-                }, 0);
+            onUnload: () => {
+                stopAnimation();
+            },
+            onSettingsRender: () => {
+                setTimeout(() => bindEvents(), 0);
                 return renderSettings();
             }
         });
